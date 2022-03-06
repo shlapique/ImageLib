@@ -18,8 +18,8 @@ using std::ifstream;
 using std::string;
 using std::vector;
 
-int rows; // строки 
-int cols; // столбцы
+int rows; 
+int cols;
 
 struct Pixel 
 {
@@ -136,6 +136,50 @@ void AverageBri(int n, int m, vector <unsigned char> &vec)
 		}	
 	}	
 }
+
+
+void uDotFilter(int n, int m)
+{
+    long sumR = 0;
+    long sumG = 0;
+    long sumB = 0;
+    unsigned char averR;
+    unsigned char averG;
+    unsigned char averB;
+
+	for(int k = 0; k < rows / n; ++k)
+	{
+		for(int l = 0; l < cols / m; ++l)
+		{
+			for(int i = k * n; i < (k + 1) * n; ++i)
+			{
+				for(int j = l * m; j < (l + 1) * m; ++j)
+				{
+				    sumR += pixel.r[i][j];
+				    sumG += pixel.g[i][j];
+				    sumB += pixel.b[i][j];
+				}
+			}
+
+            averR = sumR / n * m;
+            averG = sumG / n * m;
+            averB = sumB / n * m;
+			for(int i = k * n; i < (k + 1) * n; ++i)
+			{
+				for(int j = l * m; j < (l + 1) * m; ++j)
+                {
+                    pixel.r[i][j] = averR;
+                    pixel.g[i][j] = averG;
+                    pixel.b[i][j] = averB;
+				}
+			}
+            sumR = 0; 
+            sumG = 0;
+            sumB = 0;
+		}	
+	}	
+}
+
 
 void SubmatrixSearch()
 {
@@ -509,7 +553,9 @@ int main(int args, char** cat)
 	//GScale();	
 	//SubmatrixSearch();	
 	//	
-	AlienFilter();
+	//AlienFilter();
+    uDotFilter(2, 2);
+
 	WriteOutBmp24(FileBuffer,  WriteOutFile,BufferSize);
 	
     return 1;
