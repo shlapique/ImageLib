@@ -37,11 +37,11 @@ struct Pixel
 void PicToText(string FileName)
 {
 	ofstream write(FileName);
-    	if (!write) 
-    	{
-        	cout << "Failed to write in TEXXT FILE " << FileName << endl;
-        	return;
-    	}
+    if (!write) 
+    {
+        cout << "Failed to write in TEXXT FILE " << FileName << endl;
+        return;
+    }
 
 	/*
     	char** buf = new char* [rows];
@@ -53,19 +53,20 @@ void PicToText(string FileName)
                 ';', ':', '+', '=', '-', ',', '.', '_'};
 	*/
 
-	vector <vector<char>> buf(rows, vector<char> (cols)); // vector of vectors 
-	string dic1 = "N@#W$9876543210?!abc;:+=-,._";
-	string dic = "@#OP%+=|i-:. ";
+	vector <vector<char>> buf(rows, vector<char> (cols)); // 
+	string dic = "N@#W$9876543210?!abc;:+=-,._    ";
+	string dic1 = "@#OP%+=|i-:.    ";
 
-	int metric = 256 / dic.size(); // 
-	cout << "metric: " << metric << "\n";	
+	char metric = 256 / dic.size(); // 
+    cout << "dic.size() = " << dic.size() << "\n";
+	cout << "metric: " << (int)metric << "\n";	
 	for(int i = 0; i < rows; ++i)
 	{
 		for(int j = 0; j < cols; ++j)
 		{
 			unsigned char GScale = (pixel.r[i][j] + pixel.g[i][j] + pixel.b[i][j]) / 3;	
-			int simbol = GScale / metric;
-			buf[i][j] = dic[simbol];
+			char simbol = GScale / metric;
+			buf[i][j] = dic[(int)simbol];
 		}
 	}
 
@@ -77,8 +78,7 @@ void PicToText(string FileName)
 			write << buf[i][j];
 		}
 		write << "\n";
-	}	
-
+    }	
 }
 
 void EdgeSearchNaive()
@@ -97,7 +97,6 @@ void EdgeSearchNaive()
 			if(pixel.r[i][j] == 0x80)
 				pixel.r[i][j] = pixel.g[i][j] = pixel.b[i][j] = 0x80;
 		}
-
 	}
 }
 
@@ -137,7 +136,6 @@ void AverageBri(int n, int m, vector <unsigned char> &vec)
 	}	
 }
 
-
 void uDotFilter(int n, int m)
 {
     long sumR = 0;
@@ -160,7 +158,6 @@ void uDotFilter(int n, int m)
 				    sumB += pixel.b[i][j];
 				}
 			}
-
             averR = sumR / n * m;
             averG = sumG / n * m;
             averB = sumB / n * m;
@@ -180,6 +177,18 @@ void uDotFilter(int n, int m)
 	}	
 }
 
+void EdgeFind()
+{
+    for(int i = 1; i < rows - 1; ++i)
+    {
+        for(int j = 1; j < cols - 1; ++j)
+        {
+            unsigned char bri = std::abs((pixel.r[i][j + 1] - pixel.r[i][j - 1]) / 2 +
+                (pixel.r[i - 1][j] - pixel.r[i + 1][j]) / 2);
+            pixel.r[i][j] = pixel.g[i][j] = pixel.b[i][j] = bri;
+        }
+    }
+}
 
 void SubmatrixSearch()
 {
@@ -233,60 +242,57 @@ void SubmatrixSearch()
             {
                 //cout << "k * cols / m + l = " << k * (cols / m) + l << "\n";
                 //cout << "average[k * (cols / m) + l] = " << (int)average[k * (cols / m) + l] << "\n";
-			for(int i = k * n + 1; i < (k + 1) * n - 1; ++i)
-			{
-				for(int j = l * m + 1; j < (l + 1) * m - 1; ++j)
-				{
-					//pixel.delta[i][j] = std::sqrt(((pixel.r[i][j + 1] - pixel.r[i][j - 1]) / 1 * 2) * ((pixel.r[i][j + 1] - pixel.r[i][j - 1]) / 1 * 2) + ((pixel.r[i + 1][j] - pixel.r[i - 1][j]) / 1 * 2) * ((pixel.r[i + 1][j] - pixel.r[i - 1][j]) / 1 * 2));
-					pixel.delta[i][j] = std::abs(((pixel.r[i][j + 1] - pixel.r[i][j - 1]) / 1 * 2));
-					if(pixel.delta[i][j] > max_delta + diff)
-					{
-						raznost.clear();
-						max_delta = pixel.delta[i][j];
-						raznost.push_back(pixel);
-						raznost.back().i_max = i;
-						raznost.back().j_max = j;
-					}
-				}
+			    for(int i = k * n + 1; i < (k + 1) * n - 1; ++i)
+			    {
+				    for(int j = l * m + 1; j < (l + 1) * m - 1; ++j)
+				    {
+					    //pixel.delta[i][j] = std::sqrt(((pixel.r[i][j + 1] - pixel.r[i][j - 1]) / 1 * 2) * ((pixel.r[i][j + 1] - pixel.r[i][j - 1]) / 1 * 2) + ((pixel.r[i + 1][j] - pixel.r[i - 1][j]) / 1 * 2) * ((pixel.r[i + 1][j] - pixel.r[i - 1][j]) / 1 * 2));
+					    pixel.delta[i][j] = std::abs(((pixel.r[i][j + 1] - pixel.r[i][j - 1]) / 1 * 2));
+					    if(pixel.delta[i][j] > max_delta + diff)
+					    {
+						    raznost.clear();
+						    max_delta = pixel.delta[i][j];
+						    raznost.push_back(pixel);
+					    	raznost.back().i_max = i;
+						    raznost.back().j_max = j;
+					    }
+				    }
 					
-				for(vector <Pixel>::iterator it = raznost.begin(); it != raznost.end(); ++it)
-				{
-					it -> r[it -> i_max][it -> j_max] = 0;
-					it -> g[it -> i_max][it -> j_max] = 0xff;
-					it -> b[it -> i_max][it -> j_max] = 0xff;
-				}
-				max_delta = 0;		
-			}
+				    for(vector <Pixel>::iterator it = raznost.begin(); it != raznost.end(); ++it)
+				    {
+					    it -> r[it -> i_max][it -> j_max] = 0xff;
+					    it -> g[it -> i_max][it -> j_max] = 0xff;
+					    it -> b[it -> i_max][it -> j_max] = 0xff;
+				    }
+				    max_delta = 0;		
+			    }
 
-			for(int j = l * m + 1; j < (l + 1) * m - 1; ++j)
-			{
-				for(int i = k * n + 1; i < (k + 1) * n - 1; ++i)
-				{
-					pixel.delta[i][j] = std::abs(((pixel.r[i + 1][j] - pixel.r[i - 1][j]) / 1 * 2));
-					if(pixel.delta[i][j] > max_delta + diff)
-					{
-						raznost.clear();
-						max_delta = pixel.delta[i][j];
-						raznost.push_back(pixel);
-						raznost.back().i_max = i;
-						raznost.back().j_max = j;
-					}	
-				}
+			    for(int j = l * m + 1; j < (l + 1) * m - 1; ++j)
+			    {
+				    for(int i = k * n + 1; i < (k + 1) * n - 1; ++i)
+				    {
+					    pixel.delta[i][j] = std::abs(((pixel.r[i + 1][j] - pixel.r[i - 1][j]) / 1 * 2));
+					    if(pixel.delta[i][j] > max_delta + diff)
+					    {
+						    raznost.clear();
+						    max_delta = pixel.delta[i][j];
+						    raznost.push_back(pixel);
+						    raznost.back().i_max = i;
+						    raznost.back().j_max = j;
+					    }	
+				    }
 					
-				for(vector <Pixel>::iterator it = raznost.begin(); it != raznost.end(); ++it)
-				{
-					it -> r[it -> i_max][it -> j_max] = 0;
-					it -> g[it -> i_max][it -> j_max] = 0xff;
-					it -> b[it -> i_max][it -> j_max] = 0xff;
-				}
-				max_delta = 0;		
-			}
+				    for(vector <Pixel>::iterator it = raznost.begin(); it != raznost.end(); ++it)
+				    {
+					    it -> r[it -> i_max][it -> j_max] = 0xff;
+					    it -> g[it -> i_max][it -> j_max] = 0xff;
+					    it -> b[it -> i_max][it -> j_max] = 0xff;
+				    }
+				    max_delta = 0;		
+			    }
             }
-
 		}	
-
 	}	
-
 }
 
 // Fisher - Yates shuffle	
@@ -350,42 +356,43 @@ void AlienFilter()
 
 void PaintTest()
 {
-    	for (int i = rows / 10; i < 3 * rows / 10; i++)
+    for (int i = rows / 10; i < 3 * rows / 10; i++)
 	{
-        	for (int j = cols / 10; j < 7 * cols / 10; j++)
+        for (int j = cols / 10; j < 7 * cols / 10; j++)
 		{
-            		pixel.r[i][j] = 0xff;
-	    		pixel.g[i][j] = 0;
-	    		pixel.b[i][j] = 0;
+            pixel.r[i][j] = 0xff;
+	    	pixel.g[i][j] = 0;
+	    	pixel.b[i][j] = 0;
 		}
 	}
 
-    	for (int i = 8 * rows / 10; i < rows; i++)
-        	for (int j = 8 * cols / 10; j < cols; j++)
-            		pixel.g[i][j] = 0xff;
+    for (int i = 8 * rows / 10; i < rows; i++)
+        for (int j = 8 * cols / 10; j < cols; j++)
+            pixel.g[i][j] = 0xff;
 
-    	for (int i = rows * 4 / 10; i < rows * 6 / 10; i++)
+    for (int i = rows * 4 / 10; i < rows * 6 / 10; i++)
 	{
-        	for (int j = cols * 4 / 10; j < cols * 6 / 10; j++)
+        for (int j = cols * 4 / 10; j < cols * 6 / 10; j++)
 		{
-            		pixel.g[i][j] = 0xff;
-            		pixel.r[i][j] = 0xff;
-            		pixel.b[i][j] = 0xff;
-        	}
+            pixel.g[i][j] = 0xff;
+            pixel.r[i][j] = 0xff;
+            pixel.b[i][j] = 0xff;
+        }
 	}
 
-    	for (int i = rows * 6 / 10; i < rows; i++)
-        	for (int j = cols * 0; j < cols * 1 / 10; j++)
-            		pixel.b[i][j] = 0xff;
+    for(int i = rows * 6 / 10; i < rows; i++)
+    {
+        for(int j = cols * 0; j < cols * 1 / 10; j++)
+            pixel.b[i][j] = 0xff;
+    }
 
 	for(int i = 0; i < rows / 2; ++i)
 	{
 		for(int j = 0; j < cols / 10; ++j)
 		{
-			pixel.r[i][j] = 0x0;
+	        pixel.r[i][j] = 0x0;
 			pixel.b[i][j] = 0x0;
 		}
-
 	}
 }
 
@@ -395,8 +402,8 @@ void GScale()
 	{
 		for(int j = 0; j < cols; ++j)
 		{
-			unsigned char GScale = (pixel.r[i][j] + pixel.g[i][j] + pixel.b[i][j]) / 3;	
-			pixel.r[i][j] = pixel.g[i][j] = pixel.b[i][j] = GScale;
+			unsigned char gscale = (pixel.r[i][j] + pixel.g[i][j] + pixel.b[i][j]) / 3;	
+			pixel.r[i][j] = pixel.g[i][j] = pixel.b[i][j] = gscale;
 		}
 	}
 }
@@ -421,34 +428,34 @@ bool FillAndAllocate(char* &buffer, string Picture, int& rows, int& cols, int& B
 {
 	ifstream file(Picture);
 
-    	if (file) 
+    if (file) 
 	{
-		//get length of the file
-        	file.seekg(0, std::ios::end);
-        	std::streampos length = file.tellg();
-        	file.seekg(0, std::ios::beg);
+	    //get length of the file
+        file.seekg(0, std::ios::end);
+        std::streampos length = file.tellg();
+        file.seekg(0, std::ios::beg);
 		//
 		buffer = new char[length];
-        	file.read(&buffer[0], length);
+        file.read(&buffer[0], length);
 
-        	PBITMAPFILEHEADER file_header;
-        	PBITMAPINFOHEADER info_header;
+        PBITMAPFILEHEADER file_header;
+        PBITMAPINFOHEADER info_header;
 
-        	file_header = (PBITMAPFILEHEADER)(&buffer[0]);
-        	info_header = (PBITMAPINFOHEADER)(&buffer[0] + sizeof(BITMAPFILEHEADER));
+        file_header = (PBITMAPFILEHEADER)(&buffer[0]);
+        info_header = (PBITMAPINFOHEADER)(&buffer[0] + sizeof(BITMAPFILEHEADER));
 
 		// counting the number of rows and columns
-        	rows = info_header-> biHeight;
-        	cols = info_header-> biWidth;
+        rows = info_header-> biHeight;
+        cols = info_header-> biWidth;
 
-        	BufferSize = file_header-> bfSize;
-        	return 1;
-    	}
-    	else 
+        BufferSize = file_header-> bfSize;
+        return 1;
+    }
+    else 
 	{
-       		cout << "File" << Picture << " don't Exist!" << endl;
-        	return 0;
-    	}
+        cout << "File" << Picture << " don't Exist!" << endl;
+        return 0;
+    }
 }
 
 //Returns 1 if executed sucessfully, 0 if not sucessfull
@@ -459,27 +466,27 @@ void GetPixelsFromBMP24(
 		int cols, 
 		char* FileReadBuffer) 
 { // end is BufferSize (total size of file)
-    	int count = 1;
+    int count = 1;
 	int extra = cols % 4; // The nubmer of bytes in a row (cols) will be a multiple of 4.
-    	for (int i = 0; i < rows; i++)
+    for (int i = 0; i < rows; i++)
 	{
-		count += extra;
-    		for (int j = cols - 1; j >= 0; j--)
-        		for (int k = 0; k < 3; k++) 
+	    count += extra;
+        for (int j = cols - 1; j >= 0; j--)
+            for (int k = 0; k < 3; k++) 
 			{
-                		switch (k) 
+                switch (k) 
 				{
-                			case 0:
-                    				pixel.r[i][j] = FileReadBuffer[end - count++];
-                    				break;
-                			case 1:
-                    				pixel.g[i][j] = FileReadBuffer[end - count++];
-                    				break;
-                			case 2:
-                    				pixel.b[i][j] = FileReadBuffer[end - count++];
-                    				break;
-                		}
-            		}
+                    case 0:
+                        pixel.r[i][j] = FileReadBuffer[end - count++];
+                    	break;
+                    case 1:
+                    	pixel.g[i][j] = FileReadBuffer[end - count++];
+                    	break;
+                	case 2:
+                        pixel.b[i][j] = FileReadBuffer[end - count++];
+                    	break;
+                }
+            }
 	}
 }
 
@@ -551,12 +558,15 @@ int main(int args, char** cat)
 	//PicToText(TextFileName);
 	//
 	//GScale();	
+    //EdgeFind();
+    //
 	//SubmatrixSearch();	
 	//	
 	//AlienFilter();
-    uDotFilter(2, 2);
+    //uDotFilter(2, 2);
 
+    //--------
 	WriteOutBmp24(FileBuffer,  WriteOutFile,BufferSize);
-	
-    return 1;
+
+    return 0;
 }
