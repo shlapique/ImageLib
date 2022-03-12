@@ -179,13 +179,18 @@ void uDotFilter(int n, int m)
 
 void EdgeFind()
 {
-    for(int i = 1; i < rows - 1; ++i)
+    for(int i = 0; i < rows; ++i)
     {
-        for(int j = 1; j < cols - 1; ++j)
+        for(int j = 0; j < cols; ++j)
         {
-            unsigned char bri = std::abs((pixel.r[i][j + 1] - pixel.r[i][j - 1]) / 2 +
-                (pixel.r[i - 1][j] - pixel.r[i + 1][j]) / 2);
-            pixel.r[i][j] = pixel.g[i][j] = pixel.b[i][j] = bri;
+            if(i == 0 || j == 0 || i + 1 == rows || j + 1 == cols)
+                pixel.r[i][j] = pixel.g[i][j] = pixel.b[i][j] = 0x0; 
+            else
+            {
+                unsigned char bri = std::abs((pixel.r[i][j + 1] - pixel.r[i][j - 1]) / 2 +
+                    (pixel.r[i - 1][j] - pixel.r[i + 1][j]) / 2);
+                pixel.r[i][j] = pixel.g[i][j] = pixel.b[i][j] = bri;
+            }
         }
     }
 }
@@ -557,8 +562,8 @@ int main(int args, char** cat)
 
 	//PicToText(TextFileName);
 	//
-	//GScale();	
-    //EdgeFind();
+	GScale();	
+    EdgeFind();
     //
 	//SubmatrixSearch();	
 	//	
